@@ -61,6 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void updateHeartRate(rawData) {
     Uint8List bytes = Uint8List.fromList(rawData);
     
+    // based on GATT standard
     var bpm = bytes[1];
     if (!((bytes[0] & 0x01) == 0)) {
         bpm = (((bpm >> 8) & 0xFF) | ((bpm << 8) & 0xFF00));
@@ -79,6 +80,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void updateBodyTemperature(rawData) {
     var flag = rawData[0];
 
+    // based on GATT standard
     double temperature = twosComplimentOfNegativeMantissa(((rawData[3] << 16) | (rawData[2] << 8) | rawData[1]) & 16777215) / 100.0;
     if ((flag & 1) != 0) {
       temperature = ((98.6 * temperature) - 32.0) * (5.0 / 9.0); // convert Fahrenheit to Celsius
