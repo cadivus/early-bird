@@ -30,10 +30,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-
-        <!-- Required to access Bluetooth Features -->
-        <uses-permission android:name="android.permission.BLUETOOTH" />  
-	    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />  
-	    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> 
+        <!-- Required to access Bluetooth Features -->    
     </application>
+
+    <uses-permission android:name="android.permission.BLUETOOTH" />  
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />  
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/> 
 </manifest>

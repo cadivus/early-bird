@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_blue/flutter_blue.dart';
+import 'dart:typed_data';
 
 void main() {
   runApp(const MyApp());
@@ -25,7 +27,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Cosinuss° One - Demo'),
     );
   }
 }
@@ -49,26 +51,115 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  String _connectionStatus = "Disconnected";
+  String _heartRate = "- bpm";
+  String _bodyTemperature = '- °C';
+  bool _isConnected = false;
 
-  void _incrementCounter() {
-    FlutterBlue flutterBlue = FlutterBlue.instance;
+  bool earConnectFound = false;
+
+  void updateHeartRate(rawData) {
+    Uint8List bytes = Uint8List.fromList(rawData);
+    
+    var bpm = bytes[1];
+    if (!((bytes[0] & 0x01) == 0)) {
+        bpm = (((bpm >> 8) & 0xFF) | ((bpm << 8) & 0xFF00));
+    }
+
+    var bpmLabel = "- bpm";
+    if (bpm != 0) {
+      bpmLabel = bpm.toString() + " bpm";
+    }
 
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _heartRate = bpmLabel;
+    });
+  }
+
+  void updateBodyTemperature(rawData) {
+    var flag = rawData[0];
+
+    double temperature = twosComplimentOfNegativeMantissa(((rawData[3] << 16) | (rawData[2] << 8) | rawData[1]) & 16777215) / 100.0;
+    if ((flag & 1) != 0) {
+      temperature = ((98.6 * temperature) - 32.0) * (5.0 / 9.0); // convert Fahrenheit to Celsius
+    }
+
+    setState(() {
+      _bodyTemperature = temperature.toString() + " °C"; // todo update body temp
+    });
+  }
+
+  int twosComplimentOfNegativeMantissa(int mantissa) {
+    if ((4194304 & mantissa) != 0) {
+      return (((mantissa ^ -1) & 16777215) + 1) * -1;
+    }
+
+    return mantissa;
+  }
+
+  void _connect() {
+    FlutterBlue flutterBlue = FlutterBlue.instance;
+    
+    // start scanning
+    flutterBlue.startScan(timeout: Duration(seconds: 4));
+
+    // listen to scan results
+    var subscription = flutterBlue.scanResults.listen((results) async {
+
+      // do something with scan results
+      for (ScanResult r in results) {
+        if (r.device.name == "earconnect" && !earConnectFound) {
+          earConnectFound = true; // avoid multiple connects attempts to same device
+
+          await flutterBlue.stopScan();
+
+          r.device.state.listen((state) { // listen for connection state changes
+            setState(() {
+              _isConnected = state == BluetoothDeviceState.connected;
+              _connectionStatus = (_isConnected) ? "Connected" : "Disconnected";
+            });
+          });
+
+          await r.device.connect();
+
+          var services = await r.device.discoverServices();
+
+          for (var service in services) { // iterate over services
+            for (var characteristic in service.characteristics) { // iterate over characterstics
+              switch (characteristic.uuid.toString()) {
+                case "0000a001-1212-efde-1523-785feabcd123":
+                  print("Starting sampling ...");
+                  await characteristic.write([0x32, 0x31, 0x39, 0x32, 0x37, 0x34, 0x31, 0x30, 0x35, 0x39, 0x35, 0x35, 0x30, 0x32, 0x34, 0x35]);
+                  await Future.delayed(new Duration(seconds: 2)); // short delay before next bluetooth operation otherwise BLE crashes
+                  break;
+
+                case "00002a37-0000-1000-8000-00805f9b34fb":
+                  characteristic.value.listen((rawData) => {
+                    updateHeartRate(rawData)
+                  });
+                  await characteristic.setNotifyValue(true);
+                  await Future.delayed(new Duration(seconds: 2)); // short delay before next bluetooth operation otherwise BLE crashes
+                  break;
+
+                case "00002a1c-0000-1000-8000-00805f9b34fb":
+                  characteristic.value.listen((rawData) => {
+                    updateBodyTemperature(rawData)
+                  });
+                  await characteristic.setNotifyValue(true);
+                  await Future.delayed(new Duration(seconds: 2)); // short delay before next bluetooth operation otherwise BLE crashes
+                  break;
+              }
+            };
+          };
+        }
+        
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
+
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
@@ -81,38 +172,51 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+            Row(children: [
+              const Text(
+              'Status: ',
+              ),
+              Text(
+                '$_connectionStatus'
+              ),
+            ]),
+            Row(children: [
+              const Text(
+                'Heart Rate: '
+              ), 
+              Text(
+                '$_heartRate'
+              ),
+            ]),
+            Row(children: [
+              const Text(
+                'Body Temperature: '
+              ), 
+              Text(
+                '$_bodyTemperature'
+              ),
+            ]),
+            Row(children: [
+              const Text(
+                '\nNote: You have to insert the earbud in your  \n ear in order to receive heart rate values.'
+              )
+            ]),
           ],
         ),
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      floatingActionButton: Visibility(visible: !_isConnected, 
+        child: FloatingActionButton(
+          onPressed: _connect,
+          tooltip: 'Increment',
+          child: const Icon(Icons.bluetooth_searching_sharp),
+        ),
+       ),
     );
   }
 }
