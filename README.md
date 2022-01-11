@@ -13,4 +13,4 @@ Currently all the required relevant code is inside the `main.dart` file (`lib > 
 
 ## Screenshot
 
-![image](https://user-images.githubusercontent.com/11386075/147940533-fecc8ced-b416-4903-875c-44a6c1019f50.png)
+![Screenshot_20220111-122150](https://user-images.githubusercontent.com/11386075/148934041-2db3c73a-f15b-4d73-bb66-27a552af1536.png)
