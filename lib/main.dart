@@ -54,6 +54,11 @@ class _MyHomePageState extends State<MyHomePage> {
   String _connectionStatus = "Disconnected";
   String _heartRate = "- bpm";
   String _bodyTemperature = '- °C';
+
+  String _accX = "-";
+  String _accY = "-";
+  String _accZ = "-";
+
   bool _isConnected = false;
 
   bool earConnectFound = false;
@@ -88,6 +93,25 @@ class _MyHomePageState extends State<MyHomePage> {
 
     setState(() {
       _bodyTemperature = temperature.toString() + " °C"; // todo update body temp
+    });
+  }
+
+  void updatePPGRaw(rawData) {
+    Uint8List bytes = Uint8List.fromList(rawData);
+  }
+
+  void updateAccelerometer(rawData) {
+    Int8List bytes = Int8List.fromList(rawData);
+
+    // description based on placing the earable into your right ear canal
+    int acc_x = bytes[14];
+    int acc_y = bytes[16];
+    int acc_z = bytes[18];
+
+    setState(() {
+      _accX = acc_x.toString();
+      _accY = acc_y.toString();
+      _accZ = acc_z.toString();
     });
   }
 
@@ -133,6 +157,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   print("Starting sampling ...");
                   await characteristic.write([0x32, 0x31, 0x39, 0x32, 0x37, 0x34, 0x31, 0x30, 0x35, 0x39, 0x35, 0x35, 0x30, 0x32, 0x34, 0x35]);
                   await Future.delayed(new Duration(seconds: 2)); // short delay before next bluetooth operation otherwise BLE crashes
+                  characteristic.value.listen((rawData) => {
+                    updateAccelerometer(rawData)
+                  });
+                  await characteristic.setNotifyValue(true);
+                  await Future.delayed(new Duration(seconds: 2));
                   break;
 
                 case "00002a37-0000-1000-8000-00805f9b34fb":
@@ -201,6 +230,30 @@ class _MyHomePageState extends State<MyHomePage> {
               ), 
               Text(
                 '$_bodyTemperature'
+              ),
+            ]),
+            Row(children: [
+              const Text(
+                'Accelerometer X: '
+              ), 
+              Text(
+                '$_accX'
+              ),
+            ]),
+            Row(children: [
+              const Text(
+                'Accelerometer Y: '
+              ), 
+              Text(
+                '$_accY'
+              ),
+            ]),
+            Row(children: [
+              const Text(
+                'Accelerometer Z: '
+              ), 
+              Text(
+                '$_accZ'
               ),
             ]),
             Row(children: [
