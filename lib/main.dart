@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_blue/flutter_blue.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'dart:typed_data';
 
 void main() {
@@ -144,20 +143,20 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _connect() {
-    FlutterBlue flutterBlue = FlutterBlue.instance;
+    FlutterBluePlus flutterBluePlus = FlutterBluePlus.instance;
     
     // start scanning
-    flutterBlue.startScan(timeout: Duration(seconds: 4));
+    flutterBluePlus.startScan(timeout: Duration(seconds: 4));
 
     // listen to scan results
-    var subscription = flutterBlue.scanResults.listen((results) async {
+    var subscription = flutterBluePlus.scanResults.listen((results) async {
 
       // do something with scan results
       for (ScanResult r in results) {
         if (r.device.name == "earconnect" && !earConnectFound) {
           earConnectFound = true; // avoid multiple connects attempts to same device
 
-          await flutterBlue.stopScan();
+          await flutterBluePlus.stopScan();
 
           r.device.state.listen((state) { // listen for connection state changes
             setState(() {
