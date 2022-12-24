@@ -30,6 +30,11 @@ dependencies:
   flutter:
     sdk: flutter
 
+  cosinuss_lib:
+    git:
+      url: git@github.com:cadivus/cosinuss-flutter-lib-with-emulator.git
+      ref: main
+      path: cosinuss_lib
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
