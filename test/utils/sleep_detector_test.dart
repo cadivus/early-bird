@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:cosinuss/utils/sleep_detector.dart';
 import 'package:cosinuss_lib/data_model/cosinuss_data.dart';
+import 'package:early_bird/utils/sleep_detector.dart';
 import 'package:path/path.dart' show dirname, join;
 import 'package:flutter_test/flutter_test.dart';
 
