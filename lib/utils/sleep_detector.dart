@@ -172,4 +172,9 @@ class SleepDetector {
 
     return _fellAsleep();
   }
+
+  void reset() {
+    _dataPoints.clear();
+    _invalidateAccelerometerExtrema();
+  }
 }
