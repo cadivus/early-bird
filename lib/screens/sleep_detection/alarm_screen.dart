@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:vibration/vibration.dart';
 
 class AlarmScreen extends StatefulWidget {
   const AlarmScreen({
@@ -19,16 +21,36 @@ class _AlarmScreenState extends State<AlarmScreen>
 
   late AnimationController animationController;
   late Animation animation;
-  
+
+  Timer? vibrateTimer;
+
   @override
   void dispose() {
     animationController.stop();
     animationController.dispose();
+    vibrateTimer?.cancel();
     super.dispose();
+  }
+
+  void vibrate() async {
+    if (await Vibration.hasVibrator() != true) {
+      return;
+    }
+    if (await Vibration.hasAmplitudeControl() == true) {
+      vibrateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        Vibration.vibrate(amplitude: 128);
+      });
+    } else {
+      vibrateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        Vibration.vibrate();
+      });
+    }
   }
 
   @override
   void initState() {
+    vibrate();
+
     animationController = AnimationController(
       vsync: this,
       duration: const Duration(
@@ -47,6 +69,7 @@ class _AlarmScreenState extends State<AlarmScreen>
     animationController.repeat(
       reverse: true,
     );
+
     super.initState();
   }
 

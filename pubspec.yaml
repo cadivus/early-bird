@@ -45,6 +45,7 @@ dependencies:
   settings_ui: ^2.0.2
   flutter_material_pickers: ^3.3.0
   universal_html: ^2.0.8
+  vibration: ^1.7.6
 
 dev_dependencies:
   flutter_test:
