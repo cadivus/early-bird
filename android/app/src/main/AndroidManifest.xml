@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.cosinuss">
    <application
-        android:label="cosinuss"
+        android:label="Early bird"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
